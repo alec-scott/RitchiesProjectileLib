@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import rbasamoyai.ritchiesprojectilelib.RPLClient;
+import rbasamoyai.ritchiesprojectilelib.effects.CameraAngleHooks;
 import rbasamoyai.ritchiesprojectilelib.effects.CameraModifier;
 
 /**
@@ -35,14 +36,16 @@ public abstract class CameraMixin {
 	@Inject(method = "alignWithEntity", at = @At("TAIL"))
 	private void ritchiesprojectilelib$applyScreenShake(final float partialTicks, final CallbackInfo ci) {
 		final float[] angles = {this.yRot, this.xRot, 0.0F};
-		RPLClient.onCameraSetup((Camera) (Object) this, partialTicks, new CameraModifier() {
+		CameraModifier modifier = new CameraModifier() {
 			@Override public void setYaw(float yaw) { angles[0] = yaw; }
 			@Override public float getYaw() { return angles[0]; }
 			@Override public void setPitch(float pitch) { angles[1] = pitch; }
 			@Override public float getPitch() { return angles[1]; }
 			@Override public void setRoll(float roll) { angles[2] = roll; }
 			@Override public float getRoll() { return angles[2]; }
-		});
+		};
+		RPLClient.onCameraSetup((Camera) (Object) this, partialTicks, modifier);
+		CameraAngleHooks.run((Camera) (Object) this, partialTicks, modifier);
 		if (angles[0] == this.yRot && angles[1] == this.xRot && angles[2] == 0.0F)
 			return;
 		this.setRotation(angles[0], angles[1]);
