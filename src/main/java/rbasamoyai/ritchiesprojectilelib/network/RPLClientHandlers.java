@@ -4,6 +4,7 @@ import net.minecraft.client.Minecraft;
 /*? if >=1.21 {*/import net.minecraft.network.DisconnectionDetails;/*?}*/
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.Vec3;
 import rbasamoyai.ritchiesprojectilelib.RitchiesProjectileLib;
 import rbasamoyai.ritchiesprojectilelib.effects.screen_shake.RPLScreenShakeHandlerClient;
 import rbasamoyai.ritchiesprojectilelib.projectile_burst.ProjectileBurst;
@@ -26,7 +27,8 @@ public class RPLClientHandlers {
 
 		int lerpSteps = packet.lerpSteps();
 		if (lerpSteps < 1) lerpSteps = 3;
-		entity.lerpTo(packet.x(), packet.y(), packet.z(), packet.yRot(), packet.xRot(), lerpSteps/*? if <1.21 {*//*, false*//*?}*/);
+		// PORT-NOTE(mc26.1): lerpTo is gone; the entity's InterpolationHandler now decides the step count.
+		entity.moveOrInterpolateTo(new Vec3(packet.x(), packet.y(), packet.z()), packet.yRot(), packet.xRot());
 		entity.setDeltaMovement(packet.dx(), packet.dy(), packet.dz());
 		entity.setOnGround(packet.onGround());
 	}

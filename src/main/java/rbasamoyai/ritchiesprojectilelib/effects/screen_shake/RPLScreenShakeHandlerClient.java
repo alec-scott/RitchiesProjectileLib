@@ -4,19 +4,19 @@ import java.util.Map;
 
 import it.unimi.dsi.fastutil.objects.Object2ReferenceOpenHashMap;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import rbasamoyai.ritchiesprojectilelib.RitchiesProjectileLib;
 
 public class RPLScreenShakeHandlerClient {
 
-    private static final Map<ResourceLocation, ModScreenShakeHandler> HANDLERS = new Object2ReferenceOpenHashMap<>();
+    private static final Map<Identifier, ModScreenShakeHandler> HANDLERS = new Object2ReferenceOpenHashMap<>();
 
-    public static final ResourceLocation DEFAULT_HANDLER_ID = RitchiesProjectileLib.resource("shake_handler");
+    public static final Identifier DEFAULT_HANDLER_ID = RitchiesProjectileLib.resource("shake_handler");
     public static final ModScreenShakeHandler.Impl DEFAULT_HANDLER = registerModScreenShakeHandler(DEFAULT_HANDLER_ID, new ModScreenShakeHandler.Impl());
 
-    public static <T extends ModScreenShakeHandler> T registerModScreenShakeHandler(ResourceLocation id, T handler) {
+    public static <T extends ModScreenShakeHandler> T registerModScreenShakeHandler(Identifier id, T handler) {
         if (HANDLERS.containsKey(id))
             throw new IllegalStateException("Ritchie's Projectile Library screen shake handler already has registered handler entry '" + id + "'");
         HANDLERS.put(id, handler);
@@ -58,7 +58,7 @@ public class RPLScreenShakeHandlerClient {
      * @param modHandlerId the id of the mod screen shake handler to handle the effect
      * @param effect the screen shake effect
      */
-    public static void addShakeEffect(ResourceLocation modHandlerId, ScreenShakeEffect effect) {
+    public static void addShakeEffect(Identifier modHandlerId, ScreenShakeEffect effect) {
         if (!HANDLERS.containsKey(modHandlerId))
             return;
         HANDLERS.get(modHandlerId).addEffect(effect);

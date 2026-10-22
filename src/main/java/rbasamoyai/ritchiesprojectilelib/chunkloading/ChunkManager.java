@@ -9,22 +9,30 @@ import it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.core.BlockPos;
-/*? if >=1.21 {*/import net.minecraft.core.HolderLookup;/*?}*/
 import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.TicketType;
-/*? if >=1.21 {*/import net.minecraft.util.datafix.DataFixTypes;/*?}*/
+import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk/*? if >=1.21 {*/.status/*?}*/.ChunkStatus;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.ProtoChunk;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedDataType;
+import rbasamoyai.ritchiesprojectilelib.RitchiesProjectileLib;
 import rbasamoyai.ritchiesprojectilelib.config.RPLConfigs;
 
 public class ChunkManager extends SavedData {
+
+	// PORT-NOTE(mc26.1): SavedData.Factory + String id became SavedDataType with an Identifier id.
+	public static final SavedDataType<ChunkManager> TYPE = new SavedDataType<>(
+		RitchiesProjectileLib.resource(RitchiesProjectileLib.CHUNK_MANAGER_ID),
+		ChunkManager::new,
+		CompoundTag.CODEC.xmap(ChunkManager::load, manager -> manager.save(new CompoundTag())),
+		DataFixTypes.SAVED_DATA_FORCED_CHUNKS
+	);
 
 	private final LongOpenHashSet chunks;
 	private final LongArrayFIFOQueue queue = new LongArrayFIFOQueue();
@@ -33,12 +41,6 @@ public class ChunkManager extends SavedData {
 
 	public ChunkManager() { this(new LongOpenHashSet()); }
 
-    //? if >=1.21 {
-    public static SavedData.Factory<ChunkManager> factory() {
-        return new SavedData.Factory(ChunkManager::new, (tag, provider) -> load((CompoundTag) tag, (HolderLookup.Provider) provider), DataFixTypes.SAVED_DATA_FORCED_CHUNKS);
-    } //todo: check if this is actually the correct way to do this
-    //?}
-
     public ChunkManager(LongOpenHashSet chunks) {
         this.chunks = chunks;
 		this.inQueue = new LongOpenHashSet(this.chunks);
@@ -46,15 +48,14 @@ public class ChunkManager extends SavedData {
 			this.queue.enqueue(packedPos);
     }
 
-    public static ChunkManager load(CompoundTag tag/*? if >=1.21 {*/, HolderLookup.Provider registries/*?}*/) {
-		long[] arr = tag.getLongArray("LoadedChunks");
+    public static ChunkManager load(CompoundTag tag) {
+		long[] arr = tag.getLongArray("LoadedChunks").orElseGet(() -> new long[0]);
 		LongOpenHashSet chunks = new LongOpenHashSet(arr);
 		return new ChunkManager(chunks);
 	}
 
-	@Override
     @NotNull
-	public CompoundTag save(CompoundTag tag/*? if >=1.21 {*/, HolderLookup.Provider registries/*?}*/) {
+	public CompoundTag save(CompoundTag tag) {
         tag.putLongArray("LoadedChunks", this.chunks.toLongArray());
         return tag;
     }
@@ -64,7 +65,7 @@ public class ChunkManager extends SavedData {
 	 */
 	@Deprecated
 	public void queueForceLoad(ChunkPos pos) {
-		long packedPos = pos.toLong();
+		long packedPos = pos.pack();
 		if (this.inQueue.add(packedPos)) {
 			this.queue.enqueue(packedPos);
 			this.chunks.add(packedPos);
@@ -73,7 +74,7 @@ public class ChunkManager extends SavedData {
 	}
 
 	public void tick(ServerLevel level) {
-		LongSet vanillaForcedChunks = level.getForcedChunks();
+		LongSet vanillaForcedChunks = level.getForceLoadedChunks();
 		int MAX_SIZE = RPLConfigs.server().maxChunksForceLoaded.get();
         if (MAX_SIZE <= 0)
             MAX_SIZE = Integer.MAX_VALUE;
@@ -87,8 +88,8 @@ public class ChunkManager extends SavedData {
             int age = entry.getValue();
             if (age <= -1) {
                 // Inefficient but less accessor boilerplate
-                ChunkPos cpos = new ChunkPos(packedPos);
-                BlockPos bpos = new BlockPos(SectionPos.sectionToBlockCoord(cpos.x), 0, SectionPos.sectionToBlockCoord(cpos.z));
+                ChunkPos cpos = ChunkPos.unpack(packedPos);
+                BlockPos bpos = new BlockPos(SectionPos.sectionToBlockCoord(cpos.x()), 0, SectionPos.sectionToBlockCoord(cpos.z()));
                 if (level.isPositionEntityTicking(bpos))
                     age = DEFAULT_AGE;
             }
@@ -106,7 +107,7 @@ public class ChunkManager extends SavedData {
 				break;
 			long packedPos = this.queue.dequeueLong();
 			this.inQueue.remove(packedPos);
-			ChunkPos chunkPos = new ChunkPos(packedPos);
+			ChunkPos chunkPos = ChunkPos.unpack(packedPos);
 			if (this.loaded.containsKey(packedPos) && this.loaded.get(packedPos) > -1) {
 				this.loaded.put(packedPos, DEFAULT_AGE);
 				expired.remove(packedPos);
@@ -119,7 +120,7 @@ public class ChunkManager extends SavedData {
 		}
 
 		for (long packedPos : expired) {
-			level.getChunkSource().updateChunkForced(new ChunkPos(packedPos), false);
+			level.getChunkSource().updateChunkForced(ChunkPos.unpack(packedPos), false);
 			this.loaded.remove(packedPos);
 			if (!this.inQueue.contains(packedPos))
 				this.chunks.remove(packedPos);
@@ -135,13 +136,13 @@ public class ChunkManager extends SavedData {
 
 	private static boolean loadChunkNoGenerate(ServerLevel level, ChunkPos cpos) {
 		ServerChunkCache source = level.getChunkSource();
-		ChunkAccess immediate = source.getChunkNow(cpos.x, cpos.z);
+		ChunkAccess immediate = source.getChunkNow(cpos.x(), cpos.z());
 		if (immediate != null)
 			return true;
-		ChunkAccess access = source.getChunk(cpos.x, cpos.z, ChunkStatus.EMPTY, true);
+		ChunkAccess access = source.getChunk(cpos.x(), cpos.z(), ChunkStatus.EMPTY, true);
 		if (access instanceof ProtoChunk) {
-			source.removeRegionTicket(TicketType.UNKNOWN, cpos, -11, cpos);
-			access = source.getChunk(cpos.x, cpos.z, ChunkStatus.FULL, true);
+			// PORT-NOTE(mc26.1): removeRegionTicket is gone; the UNKNOWN ticket getChunk adds expires after one tick.
+			access = source.getChunk(cpos.x(), cpos.z(), ChunkStatus.FULL, true);
 		}
         return access instanceof LevelChunk;
     }

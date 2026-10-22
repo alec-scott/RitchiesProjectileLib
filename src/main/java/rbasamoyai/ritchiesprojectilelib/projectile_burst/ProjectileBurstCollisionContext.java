@@ -1,6 +1,8 @@
 package rbasamoyai.ritchiesprojectilelib.projectile_burst;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.CollisionGetter;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.material.FluidState;
@@ -18,5 +20,12 @@ public record ProjectileBurstCollisionContext(double y) implements CollisionCont
 
 	@Override public boolean isHoldingItem(Item item) { return false; }
 	@Override public boolean canStandOnFluid(FluidState state, FluidState fluidState) { return false; }
+	@Override public boolean alwaysCollideWithFluid() { return false; }
+
+	// PORT-NOTE(mc26.1): new CollisionContext method; same as vanilla's EntityCollisionContext.
+	@Override
+	public VoxelShape getCollisionShape(BlockState state, CollisionGetter collisionGetter, BlockPos pos) {
+		return state.getCollisionShape(collisionGetter, pos, this);
+	}
 
 }

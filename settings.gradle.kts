@@ -1,29 +1,13 @@
 pluginManagement {
-	repositories {
-		maven("https://maven.fabricmc.net/")
-		maven("https://maven.architectury.dev/")
-		maven("https://maven.minecraftforge.net/")
-		maven("https://maven.quiltmc.org/repository/release")
-		maven("https://maven.kikugie.dev/snapshots")
-		gradlePluginPortal()
-	}
+    repositories {
+        maven("https://maven.fabricmc.net/")
+        mavenCentral()
+        gradlePluginPortal()
+    }
 }
 
 plugins {
-	id("dev.kikugie.stonecutter") version "0.7-alpha.10"
-}
-
-stonecutter {
-	centralScript = "build.gradle.kts"
-	kotlinController = true
-	create(rootProject) {
-		// Root `src/` functions as the 'common' project
-        vcsVersion = "1.21.1"
-		versions("1.20.1", "1.21.1")
-		branch("fabric") { versions("1.20.1") } // Copies versions from root
-		branch("forge") { versions("1.20.1") }
-		branch("neoforge") { versions("1.21.1") }
-	}
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
 rootProject.name = "RitchiesProjectileLib"

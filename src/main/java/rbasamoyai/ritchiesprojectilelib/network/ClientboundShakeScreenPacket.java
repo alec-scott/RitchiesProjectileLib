@@ -1,16 +1,16 @@
 package rbasamoyai.ritchiesprojectilelib.network;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import rbasamoyai.ritchiesprojectilelib.EnvExecute;
 import rbasamoyai.ritchiesprojectilelib.effects.screen_shake.ScreenShakeEffect;
 
-public record ClientboundShakeScreenPacket(@Nullable ResourceLocation modHandlerId, ScreenShakeEffect effect) implements RootPacket {
+public record ClientboundShakeScreenPacket(@Nullable Identifier modHandlerId, ScreenShakeEffect effect) implements RootPacket {
 
     public ClientboundShakeScreenPacket(FriendlyByteBuf buf) {
-        this(buf.readBoolean() ? buf.readResourceLocation() : null, new ScreenShakeEffect(buf.readVarInt(), buf.readFloat(),
+        this(buf.readBoolean() ? buf.readIdentifier() : null, new ScreenShakeEffect(buf.readVarInt(), buf.readFloat(),
             buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readDouble(), buf.readDouble(), buf.readDouble()));
     }
 
@@ -22,7 +22,7 @@ public record ClientboundShakeScreenPacket(@Nullable ResourceLocation modHandler
     public void rootEncode(FriendlyByteBuf buf) {
         buf.writeBoolean(this.modHandlerId != null);
         if (this.modHandlerId != null)
-            buf.writeResourceLocation(this.modHandlerId);
+            buf.writeIdentifier(this.modHandlerId);
         buf.writeVarInt(this.effect.duration)
             .writeFloat(this.effect.yawMagnitude)
             .writeFloat(this.effect.pitchMagnitude)

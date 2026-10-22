@@ -2,7 +2,7 @@ package rbasamoyai.ritchiesprojectilelib.network;
 
 import java.util.function.Function;
 
-import dev.architectury.injectables.annotations.ExpectPlatform;
+import rbasamoyai.ritchiesprojectilelib.network.fabric.RPLNetworkImpl;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -29,7 +29,7 @@ public class RPLNetwork {
 		sidedInit();
 	}
 
-	@ExpectPlatform public static void sidedInit() { throw new AssertionError(); }
+	public static void sidedInit() { RPLNetworkImpl.sidedInit(); }
 
 	private static <T extends RootPacket> void addMsg(int id, Class<T> clazz, Function<FriendlyByteBuf, T> decoder) {
 		TYPE_TO_ID.put(clazz, id);
@@ -52,12 +52,12 @@ public class RPLNetwork {
 		sendToClientPlayer(new ClientboundCheckChannelVersionPacket(VERSION), player);
 	}
 
-	@ExpectPlatform public static void sendToServer(RootPacket pkt) { throw new AssertionError(); }
+	public static void sendToServer(RootPacket pkt) { RPLNetworkImpl.sendToServer(pkt); }
 
-	@ExpectPlatform public static void sendToClientPlayer(RootPacket pkt, ServerPlayer player) { throw new AssertionError(); }
+	public static void sendToClientPlayer(RootPacket pkt, ServerPlayer player) { RPLNetworkImpl.sendToClientPlayer(pkt, player); }
 
-	@ExpectPlatform public static void sendToClientTracking(RootPacket pkt, Entity tracked) { throw new AssertionError(); }
+	public static void sendToClientTracking(RootPacket pkt, Entity tracked) { RPLNetworkImpl.sendToClientTracking(pkt, tracked); }
 
-	@ExpectPlatform public static void sendToClientAll(RootPacket pkt, MinecraftServer server) { throw new AssertionError(); }
+	public static void sendToClientAll(RootPacket pkt, MinecraftServer server) { RPLNetworkImpl.sendToClientAll(pkt, server); }
 
 }

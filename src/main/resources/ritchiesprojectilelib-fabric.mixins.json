@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "rbasamoyai.ritchiesprojectilelib.mixin.fabric",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "CameraMixin"
+  ],
+  "mixins": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
